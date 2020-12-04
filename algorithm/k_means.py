@@ -55,24 +55,20 @@ dataset = dataset.drop(['Leak Alarm'], axis=1)
 dataset['Date'] = dataset['Date'].str.replace('\D', '').astype(int)
 # print(dataset.to_string(max_rows=200))
 print("Number of null values in dataset :\n", dataset.isna().sum())
-# # corrolation matrix
-# print(dataset.columns.values)
-# df = pd.DataFrame(dataset, columns=['Date', 'ID', 'value_Lvl', 'value_Spr', 'Leak Found'])
-# corrMatrix = df.corr()
-# sns.heatmap(corrMatrix, annot=True, cmap="YlGnBu")
-# plt.show()
-# print(dataset.loc[dataset['Leak Found'].isna()])
-# print("tempdata : \n ", dataset.shape[0])
-
+###################################################### CORRELATION MATRIX
+print(dataset.columns.values)
+dataset2 = dataset.drop(["Leak Found"], axis=1)
+df = pd.DataFrame(dataset2, columns=['Date', 'ID', 'value_Lvl', 'value_Spr'])
+corrMatrix = df.corr()
+sns.heatmap(corrMatrix, annot=True, cmap="YlGnBu")
+plt.show()
+###################################################### SPLIT THE DATASET
 x_train = dataset.loc[dataset['Leak Found'].isna()]
 x_train = x_train.drop(["Leak Found"], axis=1)
-
 # x_train = x_train.sample(frac=1)
 # print("x_train shape : ", x_train.shape)
 x_test = dataset.loc[dataset['Leak Found'].notna()]
 y_test = x_test.loc[dataset['Leak Found'].notna(), ['Leak Found']]
-
-# print(y_test)
 
 df = pd.DataFrame(x_test, columns=['Date', 'ID', 'value_Lvl', 'value_Spr', 'Leak Found'])
 corrMatrix = df.corr()
