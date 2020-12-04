@@ -26,6 +26,8 @@ from sklearn.semi_supervised import LabelPropagation
 from sklearn.cluster import KMeans
 import seaborn as sns
 from sklearn import metrics
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import Normalizer
 sns.set()
 
 pd.set_option('mode.chained_assignment', None)
@@ -97,32 +99,68 @@ print("dataset features :  ", dataset.columns)
 dummy_data = dataset.drop(['Leak Found'], axis=1)
 print("Description  : \n ", dummy_data.describe())
 # dummy_data = dummy_data.sample(frac=1)
-x_dummy = dummy_data[54:]
-x_train = x_dummy
+#x_dummy = dummy_data[:54]
+#x_train = x_dummy
+# build the scaler model
+# scaler = MinMaxScaler()
+# # fit using the train set
+# scaler.fit(x_train)
+# # transform the test test
+# x_train = scaler.transform(x_train)
+# # build the scaler model
+# scaler = Normalizer()
+# # fit using the train set
+# scaler.fit(x_train)
+# # transform the test test
+# x_train = scaler.transform(x_train)
 
+########################################### APPLYING GUASSRANK NORMALIZATION
+from gaussrank import *
+x_cols = x_train.columns[:]
+x = x_train[x_cols]
+
+s = GaussRankScaler()
+x_ = s.fit_transform( x )
+assert x_.shape == x.shape
+x_train[x_cols] = x_
+
+########################################## TO REPRESENT OUR DATASET, ALL COLUMNS IN MATRIX FORM
+x_train = pd.DataFrame(x_train)
+pd.plotting.scatter_matrix(x_train)
+x_train.plot(kind='density',subplots=True,sharex=False)
+plt.show()
+######################################### APPLYING KMEANS
 kmeans = KMeans(n_clusters=2,
                 init="k-means++",
                 random_state=None,
                 max_iter=300,
                 algorithm='auto',
                 n_init=1000).fit(x_train)
-y_pred = kmeans.predict(x_test)
+y_pred = kmeans.predict(x_train)
+
+# dataframe = pd.DataFrame(y_pred, columns=['y-pred'])
+# dataframe["ID"]= x_test["ID"]
+# plt.scatter(x_test["ID"], dataframe["y-pred"], label='skitscat', color='k', s=25, marker="o")
+# plt.show()
+
 centroids = kmeans.cluster_centers_
 print("Cluster centroids are : \n", centroids)
 X = np.arange(1, len(x_train) + 1)
 # print("x_train shape", x_train.shape)
 print("x_test features  :  ", x_test.columns)
+
 # plt.scatter(x_train["Date"], x_train["value_Lvl"], s=50)
 # plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red')
 # plt.show()
+############################################# ACCURACY
 print("Prediction : \n ", y_pred)
-print(metrics.accuracy_score(y_test, y_pred))
-y_kmeans = kmeans.fit_predict(x_train)
-print("k_means predict is equal to :  ", y_kmeans)
+# print(metrics.accuracy_score(y_test, y_pred))
+############################################# TO GET THE FINAL SCATTER AFTER PREDICTION
 d_numpy = x_train.to_numpy()
-plt.scatter(d_numpy[y_kmeans == 0, 1], d_numpy[y_kmeans == 0, 2], s=100, c='green', label='Cluster 1')
-plt.scatter(d_numpy[y_kmeans == 1, 1], d_numpy[y_kmeans == 1, 2], s=100, c='blue', label='Cluster 2')
-plt.scatter(centroids[:, 0], centroids[:, 1], s=300, c='red')
+
+plt.scatter(d_numpy[y_pred == 0, 2], d_numpy[y_pred == 0, 3], s=25, c='green', label='Cluster 1')
+plt.scatter(d_numpy[y_pred == 1, 2], d_numpy[y_pred == 1, 3], s=25, c='blue', label='Cluster 2')
+plt.scatter(centroids[:, 0], centroids[:, 1], s=200, c='yellow')
 plt.title('Clusters')
 plt.legend()
 plt.show()
