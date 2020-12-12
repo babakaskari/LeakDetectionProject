@@ -32,7 +32,7 @@ df7 = df7.rename(columns={'Date Visited': 'Date'})
 
 df8 = pd.merge(df6, df7, on=['ID', 'Date'], how='left')
 df8 = df8.sort_values(['Leak Alarm', 'Leak Found']).reset_index(drop=True)
-# df8["Leak Alarm"] = df8["Leak Alarm"].fillna(-1)
+#df8["Leak Alarm"] = df8["Leak Alarm"].fillna(-1)
 #df8["Leak Found"] = df8["Leak Found"].fillna(-1)
 dataset = df8
 ###################################################### Delete these row indexes from dataFrame

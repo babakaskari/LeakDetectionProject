@@ -9,7 +9,7 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import plot_confusion_matrix
 pd.set_option('mode.chained_assignment', None)
 
-df = pd.read_csv("Acoustic Logger Data.csv")
+df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
 df1 = df.loc[df["LvlSpr"] == "Lvl"]
 df3 = df.loc[df["LvlSpr"] == "Spr"]
 df2 = pd.melt(df1, id_vars=['LvlSpr', 'ID'], value_vars=df.loc[:0, '02-May':].columns.values.tolist(), var_name='Date')
@@ -19,7 +19,7 @@ df6 = df5.drop(['LvlSpr_Lvl', 'LvlSpr_Spr'], axis=1).dropna()
 df6['Date'] = pd.to_datetime(df6['Date'], format='%d-%b')
 df6['Date'] = df6['Date'].dt.strftime('%d-%m')
 
-df7 = pd.read_csv("Leak Alarm Results.csv")
+df7 = pd.read_csv("../dataset/Leak Alarm Results.csv")
 df7['Date Visited'] = pd.to_datetime(df7['Date Visited'], format='%d/%m/%Y')
 df7['Date Visited'] = df7['Date Visited'].dt.strftime('%d-%m')
 df7 = df7.rename(columns={'Date Visited': 'Date'})
@@ -42,8 +42,7 @@ shuffled_labeled_df = labeled_df.sample(frac=1).reset_index(drop=True)
 labels = shuffled_labeled_df[["Leak Found"]]
 # df8.to_csv('OHE.csv')
 X_labeled = shuffled_labeled_df.drop(labels=['Leak Found'], axis=1) #Labled train
-X_unlabeled = unlabeled_df.drop(labels=['Leak Found'], axis=1)  #Unlabled
-
+X_unlabeled = unlabeled_df.drop(labels=['Leak Found'], axis=1)      #Unlabled
 
 test_ind = round(len(X_labeled)*0.70)
 train_ind = test_ind + round(len(X_labeled)*0.30)

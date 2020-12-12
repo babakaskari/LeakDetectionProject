@@ -59,22 +59,28 @@ labeled_df = dataset.loc[dataset['Leak Found'].notnull()]
 unlabeled_df = dataset.loc[dataset['Leak Found'].isnull()]
 shuffled_labeled_df = labeled_df.sample(frac=1).reset_index(drop=True)
 labels = shuffled_labeled_df[["Leak Found"]]
-############################################################ APPLYING GUASSRANK NORMALIZATION
-# x_cols = x_train.columns[:]
-# x = x_train[x_cols]
-#
-# s = GaussRankScaler()
-# x_ = s.fit_transform( x )
-# assert x_.shape == x.shape
-# x_train[x_cols] = x_
-# ############################################################ TO REPRESENT OUR DATASET, ALL COLUMNS IN MATRIX FORM
-# x_train = pd.DataFrame(x_train)
-# pd.plotting.scatter_matrix(x_train)
-# x_train.plot(kind='density', subplots=True, sharex=False)
-# plt.show()
+
 
 X_labeled = shuffled_labeled_df.drop(labels=['Leak Found'], axis=1)   ###################  Labled train
 X_unlabeled = unlabeled_df.drop(labels=['Leak Found'], axis=1)        ###################  Unlabled
+############################################################ APPLYING GUASSRANK NORMALIZATION
+# =======================labeled data
+x_cols = X_labeled.columns[:]
+x = X_labeled[x_cols]
+
+s = GaussRankScaler()
+x_ = s.fit_transform( x )
+assert x_.shape == x.shape
+X_labeled[x_cols] = x_
+
+# ===================== unlabeled data
+x_cols = X_unlabeled.columns[:]
+x = X_unlabeled[x_cols]
+
+s = GaussRankScaler()
+x_ = s.fit_transform( x )
+assert x_.shape == x.shape
+X_unlabeled[x_cols] = x_
 # ############################################################ SPLIT
 test_ind = round(len(X_labeled)*0.75)
 train_ind = test_ind + round(len(X_labeled)*0.25)
