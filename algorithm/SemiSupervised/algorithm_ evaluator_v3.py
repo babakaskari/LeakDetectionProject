@@ -126,7 +126,8 @@ x_train, x_cv, y_train, y_cv = train_test_split(x_train,
 
 
 
-
+print(x_train)
+print(x_test)
 """
 model_factory = [
     LogisticRegression(),
