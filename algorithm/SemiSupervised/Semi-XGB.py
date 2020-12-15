@@ -13,74 +13,34 @@ from sklearn.metrics import f1_score
 from gaussrank import *
 from sklearn.metrics import plot_confusion_matrix
 from xgboost import XGBClassifier
+import prepossessed_dataset
 
 pd.set_option('mode.chained_assignment', None)
 
-df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
-df1 = df.loc[df["LvlSpr"] == "Lvl"]
-df3 = df.loc[df["LvlSpr"] == "Spr"]
-df2 = pd.melt(df1, id_vars=['LvlSpr', 'ID'], value_vars=df.loc[:0, '02-May':].columns.values.tolist(), var_name='Date')
-df4 = pd.melt(df3, id_vars=['LvlSpr', 'ID'], value_vars=df.loc[:0, '02-May':].columns.values.tolist(), var_name='Date')
-df5 = pd.merge(df2, df4, on= ['ID', 'Date'], suffixes=("_Lvl", "_Spr"))
-df6 = df5.drop(['LvlSpr_Lvl', 'LvlSpr_Spr'], axis=1).dropna()
-df6['Date'] = pd.to_datetime(df6['Date'], format='%d-%b')
-df6['Date'] = df6['Date'].dt.strftime('%d-%m')
+dataset = prepossessed_dataset.semi_super()
+X_unlabeled = dataset["X_unlabeled"]
 
-df7 = pd.read_csv("../dataset/Leak Alarm Results.csv")
-df7['Date Visited'] = pd.to_datetime(df7['Date Visited'], format='%d/%m/%Y')
-df7['Date Visited'] = df7['Date Visited'].dt.strftime('%d-%m')
-df7 = df7.rename(columns={'Date Visited': 'Date'})
+x_train = dataset["x_train"]
+y_train = dataset["y_train"]
+x_test = dataset["x_test"]
+y_test = dataset["y_test"]
 
-df8 = pd.merge(df6, df7, on=['ID', 'Date'], how='left')
-df8 = df8.sort_values(['Leak Alarm', 'Leak Found']).reset_index(drop=True)
-df8["Leak Alarm"] = df8["Leak Alarm"].fillna("N")
-columns_to_OHE = df8[['Date', 'Leak Alarm']]
-not_OHE_columns_df = df8[['ID', 'value_Lvl','value_Spr', 'Leak Found']]
-onehot_encoder = OneHotEncoder(sparse=False)
-onehot_encoded = onehot_encoder.fit_transform(columns_to_OHE)
-ohe_columns_df = pd.DataFrame(data=onehot_encoded, index=[i for i in range(onehot_encoded.shape[0])],
-                      columns=['f'+str(i) for i in range(onehot_encoded.shape[1])])
-preprocessed_df = ohe_columns_df.join(not_OHE_columns_df)
-preprocessed_df.loc[(preprocessed_df['Leak Found'] == 'N-PRV'), 'Leak Found'] = 'N'
-print(preprocessed_df)
-labeled_df = preprocessed_df.loc[preprocessed_df['Leak Found'].notnull()]
-unlabeled_df = preprocessed_df.loc[preprocessed_df['Leak Found'].isnull()]
-shuffled_labeled_df = labeled_df.sample(frac=1).reset_index(drop=True)
-labels = shuffled_labeled_df[["Leak Found"]]
-# df8.to_csv('OHE.csv')
-X_labeled = shuffled_labeled_df.drop(labels=['Leak Found'], axis=1) #Labled train
-X_unlabeled = unlabeled_df.drop(labels=['Leak Found'], axis=1)      #Unlabled
-# =======================labeled data
-x_cols = X_labeled.columns[:]
-x = X_labeled[x_cols]
+def evaluate_preds(model, x_true, y_true, y_preds):
+    accuracy = metrics.accuracy_score(y_true, y_preds)
+    precision = metrics.precision_score(y_true, y_preds)
+    recall = metrics.recall_score(y_true, y_preds)
+    f1 = metrics.f1_score(y_true, y_preds)
+    metric_dict = {"accuracy": round(accuracy, 2),
+                   "precision": round(precision, 2),
+                   "recall": round(recall, 2),
+                   "f1": round(f1, 2)}
+    print("Model score is : ", model.score(x_true, y_true))
+    print(f"Accuracy : {accuracy * 100:.2f}%")
+    print(f"Precision : {precision: .2f}")
+    print(f"Recall : {recall: .2f}")
+    print(f"F1 Score : {f1: .2f}")
 
-s = GaussRankScaler()
-x_ = s.fit_transform( x )
-assert x_.shape == x.shape
-X_labeled[x_cols] = x_
-
-# ===================== unlabeled data
-
-x_cols = X_unlabeled.columns[:]
-x = X_unlabeled[x_cols]
-
-s = GaussRankScaler()
-x_ = s.fit_transform( x )
-assert x_.shape == x.shape
-X_unlabeled[x_cols] = x_
-
-# #################################################
-test_ind = round(len(X_labeled)*0.70)
-train_ind = test_ind + round(len(X_labeled)*0.30)
-X_test = X_labeled.iloc[:test_ind]
-X_train = X_labeled.iloc[test_ind:train_ind]
-y_test = labels.iloc[:test_ind]
-y_train = labels.iloc[test_ind:train_ind]
-
-print(X_train)
-print(X_test)
-print(y_train)
-print(y_test)
+    return metric_dict
 
 # Initiate iteration counter
 iterations = 0
@@ -99,17 +59,18 @@ while len(high_prob) > 0:
     # print(y_train)
     # clf = LogisticRegression(max_iter=10000)
     # clf.fit(X_train, y_train.values.ravel())
-    # y_hat_train = clf.predict(X_train)
-    # y_hat_test = clf.predict(X_test)
+
     # #######################################  XGBClassifier()
     clf = XGBClassifier()
-    clf.fit(X_train, y_train)
-    xgb_pred = clf.predict(X_test)
-    xgb_matrices = evaluate_preds(clf, X_test, y_test, xgb_pred)
+    clf.fit(x_train, y_train)
+    # xgb_pred = clf.predict(x_train)
+    # xgb_matrices = evaluate_preds(clf, x_train, y_test, xgb_pred)
 
+    y_hat_train = clf.predict(x_train)
+    y_hat_test = clf.predict(x_test)
     # Calculate and print iteration # and f1 scores, and store f1 scores
-    train_f1 = f1_score(y_train, xgb_pred, average='micro')
-    test_f1 = f1_score(y_test, xgb_matrices, average='micro')
+    train_f1 = f1_score(y_train, y_hat_train, average='micro')
+    test_f1 = f1_score(y_test, y_hat_test, average='micro')
     print(f"Iteration {iterations}")
     print(f"Train f1: {train_f1}")
     print(f"Test f1: {test_f1}")
