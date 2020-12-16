@@ -21,7 +21,7 @@ sns.set()
 
 warnings.filterwarnings('ignore')
 
-
+########################################################### ONLY 53 LABELED PART OF THE DATASET
 def just_labeled():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -103,7 +103,7 @@ def just_labeled():
 
     return data_dict
 
-
+########################################################### THE UNLABELED PART OF THE DATASET
 def unlabeled():
 
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
@@ -215,7 +215,7 @@ def unlabeled():
 
     return data_dict
 
-
+############################################# ALL DATASET IS LABELED BY NO ALARM AND NO LEAK FOUND
 def labeled():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -258,10 +258,11 @@ def labeled():
     dataset['Date'] = date_encoder.transform(dataset['Date'])
     # print(dataset.to_string(max_rows=200))
     dataset = dataset.drop_duplicates()
-    print(" dataset description : ", dataset.describe())
+    dataset = dataset.reset_index(drop=True)
+    print(" dataset description : \n", dataset.describe())
     # ##############################################
     dataset = dataset.drop(['index'], axis=1)
-    print(("df8 shape : ", df8.shape))
+    print(("df8 shape : \n", df8.shape))
 
     # corrolation matrix
     print(dataset.columns.values)
@@ -276,19 +277,20 @@ def labeled():
     print("Number of null values in dataset : \n", dataset.isna().sum())
 
     leak_found = dataset.drop(['ID', 'Date', 'value_Lvl', 'value_Spr'], axis=1)
-    dataset2 = dataset.drop(['Leak Found'], axis=1)
-    print("leak found shape : ", leak_found.shape)
-    print("dataset2 shape : ", dataset2.shape)
+    dataset2 = dataset.drop(['Leak Found'], axis=1).reset_index(drop=True)
+    print(dataset2)
+    print("leak found shape : \n", leak_found.shape)
+    print("dataset2 shape :\n ", dataset2.shape)
     # ########################################## APPLYING GUASSRANK NORMALIZATION
 
-    x_cols = dataset2.columns[:]
-    x = dataset2[x_cols]
-
-    s = GaussRankScaler()
-    x_ = s.fit_transform(x)
-    assert x_.shape == x.shape
-    dataset2[x_cols] = x_
-    print("GaussRankScaler dataset description :\n ", dataset2.describe())
+    # x_cols = dataset2.columns[:]
+    # x = dataset2[x_cols]
+    #
+    # s = GaussRankScaler()
+    # x_ = s.fit_transform(x)
+    # assert x_.shape == x.shape
+    # dataset2[x_cols] = x_
+    # print("GaussRankScaler dataset description :\n ", dataset2.describe())
 
     # ############################################## standard scaler
     """
@@ -331,7 +333,7 @@ def labeled():
 
     return data_dict
 
-
+###################################################### THE DATASET FOR LABEL PROPAGATION WHICH ASSIGNS -1 TO ALL UNLABELED
 def propagation():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -430,7 +432,7 @@ def propagation():
 
     return data_dict
 
-
+############################################################### PARTIALLY LABELED AND MOSTLY UNLABELED
 def semi_super():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
