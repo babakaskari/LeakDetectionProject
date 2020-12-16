@@ -72,6 +72,10 @@ while len(high_prob) > 0:
     train_f1 = f1_score(y_train, y_hat_train, average='micro')
     test_f1 = f1_score(y_test, y_hat_test, average='micro')
     print(f"Iteration {iterations}")
+
+
+
+
     print(f"Train f1: {train_f1}")
     print(f"Test f1: {test_f1}")
     train_f1s.append(train_f1)
