@@ -21,7 +21,7 @@ sns.set()
 
 warnings.filterwarnings('ignore')
 
-########################################################### ONLY 53 LABELED PART OF THE DATASET
+
 def just_labeled():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -65,19 +65,25 @@ def just_labeled():
     print("Number of null values in dataset :\n", dataset.isna().sum())
     # ##################################################### SPLIT THE DATASET
     x_labeled_data = dataset.loc[dataset['Leak Found'].notna()]
+
     y_labeled_data = x_labeled_data["Leak Found"]
     x_labeled_data = x_labeled_data.drop(["Leak Found"], axis=1)
+
     # ############################################## standard scaler
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(x_labeled_data)
     x_train = pd.DataFrame(data_scaled)
-    print("x_train after normalization : ", x_train.head())
-    print("x_train description after normalization: ", x_labeled_data.describe())
+    # print("x_train after normalization : ", x_train.head())
+    # print("x_train description after normalization: ", x_labeled_data.describe())
 
     # ############################################################
     # x_train = x_train.sample(frac=1)
     x_unlabeled_data = dataset.loc[dataset['Leak Found'].isna()]
     y_unlabeled_data = x_unlabeled_data.drop(["Leak Found"], axis=1)
+    print("ID in just_labeld dtaaset : ", x_labeled_data["ID"].nunique())
+    print("ID in just_labeld dtaaset : ", x_labeled_data["ID"].unique())
+    print("number of occurence : ", x_labeled_data['ID'].value_counts())
+
     x_train, x_test, y_train, y_test = train_test_split(x_labeled_data,
                                                         y_labeled_data,
                                                         test_size=0.2,
@@ -86,10 +92,6 @@ def just_labeled():
                                                     y_train,
                                                     stratify=y_train,
                                                     test_size=0.2)
-
-    print('Number of data points in train data:', x_train.shape[0])
-    print('Number of data points in test data:', x_test.shape[0])
-    print('Number of data points in test data:', x_cv.shape[0])
 
     data_dict = {
         "x_train": x_train,
@@ -103,7 +105,7 @@ def just_labeled():
 
     return data_dict
 
-########################################################### THE UNLABELED PART OF THE DATASET
+
 def unlabeled():
 
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
@@ -128,6 +130,7 @@ def unlabeled():
     # df8["Leak Alarm"] = df8["Leak Alarm"].fillna(-1)
     # df8["Leak Found"] = df8["Leak Found"].fillna(-1)
     dataset = df8
+
     # ##################################################### Delete these row indexes from dataFrame
     indexNames = dataset[dataset['Leak Found'] == 'N-PRV'].index
     dataset.drop(indexNames, index=None, inplace=True)
@@ -165,8 +168,8 @@ def unlabeled():
     plt.show()
     # #####################################################
     x_test = x_test.drop(["Leak Found"], axis=1)
-    print("x_test shape is equal to :  ", x_test.shape)
-    print("dataset features :  ", dataset.columns)
+    # print("x_test shape is equal to :  ", x_test.shape)
+    # print("dataset features :  ", dataset.columns)
     # ############################################# CREATING DUMMY_DATA
     # x_centroid = np.array(x_test.iloc[[16, 17], ])
     dummy_data = dataset.drop(['Leak Found'], axis=1)
@@ -204,7 +207,7 @@ def unlabeled():
     scaler = StandardScaler()
     data_scaled = scaler.fit_transform(x_train)
     x_train = pd.DataFrame(data_scaled)
-    print("x_train description : ", x_train.describe())
+    print("x_train description : \n", x_train.describe())
     ########################################## TO REPRESENT OUR DATASET, ALL COLUMNS IN MATRIX FORM
     x_train = pd.DataFrame(x_train)
 
@@ -215,7 +218,7 @@ def unlabeled():
 
     return data_dict
 
-############################################# ALL DATASET IS LABELED BY NO ALARM AND NO LEAK FOUND
+
 def labeled():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -258,14 +261,13 @@ def labeled():
     dataset['Date'] = date_encoder.transform(dataset['Date'])
     # print(dataset.to_string(max_rows=200))
     dataset = dataset.drop_duplicates()
-    dataset = dataset.reset_index(drop=True)
     print(" dataset description : \n", dataset.describe())
     # ##############################################
     dataset = dataset.drop(['index'], axis=1)
-    print(("df8 shape : \n", df8.shape))
+    # print(("df8 shape : ", df8.shape))
 
     # corrolation matrix
-    print(dataset.columns.values)
+    # print(dataset.columns.values)
     df = pd.DataFrame(dataset, columns=['Date', 'ID', 'value_Lvl', 'value_Spr'])
     corrMatrix = df.corr()
     sns.heatmap(corrMatrix, annot=True, cmap="YlGnBu")
@@ -275,22 +277,29 @@ def labeled():
     dataset = dataset.sample(frac=1)
 
     print("Number of null values in dataset : \n", dataset.isna().sum())
+    print("datase shape before duplicate : ", dataset.shape)
 
     leak_found = dataset.drop(['ID', 'Date', 'value_Lvl', 'value_Spr'], axis=1)
-    dataset2 = dataset.drop(['Leak Found'], axis=1).reset_index(drop=True)
-    print(dataset2)
-    print("leak found shape : \n", leak_found.shape)
-    print("dataset2 shape :\n ", dataset2.shape)
+    dataset2 = dataset.drop(['Leak Found'], axis=1)
+    dataset5 = dataset2.drop_duplicates()
+
+    print("datase shape after duplicate : ", dataset5.shape)
+    print("ID in whole dtaaset : ", dataset2["ID"].nunique())
+    print("ID in just_labeld dtaaset : ", dataset2["ID"].unique())
+    print("number of occurence : ", dataset2['ID'].value_counts())
+
+    # print("leak found shape : ", leak_found.shape)
+    # print("dataset2 shape : ", dataset2.shape)
     # ########################################## APPLYING GUASSRANK NORMALIZATION
 
-    # x_cols = dataset2.columns[:]
-    # x = dataset2[x_cols]
-    #
-    # s = GaussRankScaler()
-    # x_ = s.fit_transform(x)
-    # assert x_.shape == x.shape
-    # dataset2[x_cols] = x_
-    # print("GaussRankScaler dataset description :\n ", dataset2.describe())
+    x_cols = dataset2.columns[:]
+    x = dataset2[x_cols]
+
+    s = GaussRankScaler()
+    x_ = s.fit_transform(x)
+    assert x_.shape == x.shape
+    dataset2[x_cols] = x_
+    print("GaussRankScaler dataset description :\n ", dataset2.describe())
 
     # ############################################## standard scaler
     """
@@ -311,14 +320,6 @@ def labeled():
                                                     stratify=y_train,
                                                     test_size=0.2)
 
-
-   # print("x_train : ", x_train)
-    # print("x_test : ", x_test)
-   # print("x_train shape", x_train.shape)
-   # print("x_test shape", x_test.shape)
-   # print("x_train : ", x_train.columns)
-   # print("x_test : ", x_test.colums)
-
     data_dict = {
 
         "x_train": x_train,
@@ -333,7 +334,7 @@ def labeled():
 
     return data_dict
 
-###################################################### THE DATASET FOR LABEL PROPAGATION WHICH ASSIGNS -1 TO ALL UNLABELED
+
 def propagation():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -375,11 +376,11 @@ def propagation():
     dataset['Date'] = date_encoder.transform(dataset['Date'])
     # print(dataset.to_string(max_rows=200))
     dataset = dataset.drop_duplicates()
-    print(" dataset description : ", dataset.describe())
+    print(" dataset description : \n", dataset.describe())
     # ##############################################
 
     # corrolation matrix
-    print(dataset.columns.values)
+    # print(dataset.columns.values)
     df = pd.DataFrame(dataset, columns=['Date', 'ID', 'value_Lvl', 'value_Spr'])
     corrMatrix = df.corr()
     sns.heatmap(corrMatrix, annot=True, cmap="YlGnBu")
@@ -387,7 +388,7 @@ def propagation():
     tempdata = dataset
     dataset = dataset.loc[:80]
     dataset = dataset.sample(frac=1)
-    print("dataset shape: ", dataset.shape)
+    # print("dataset shape: ", dataset.shape)
     print("Number of null values in dataset : \n", dataset.isna().sum())
     # print("dataset : ", dataset.shape[0])
     # dataset2 = dataset.drop(["Leak Found"], axis=1)
@@ -432,7 +433,7 @@ def propagation():
 
     return data_dict
 
-############################################################### PARTIALLY LABELED AND MOSTLY UNLABELED
+
 def semi_super():
     df = pd.read_csv("../dataset/Acoustic Logger Data.csv")
     df1 = df.loc[df["LvlSpr"] == "Lvl"]
@@ -474,23 +475,23 @@ def semi_super():
     dataset['Date'] = date_encoder.transform(dataset['Date'])
     # print(dataset.to_string(max_rows=200))
     dataset = dataset.drop_duplicates()
-    print(" dataset description : ", dataset.describe())
+    print(" dataset description : \n", dataset.describe())
     # ##############################################
 
     # corrolation matrix
-    print(dataset.columns.values)
+    # print(dataset.columns.values)
     df = pd.DataFrame(dataset, columns=['Date', 'ID', 'value_Lvl', 'value_Spr'])
     corrMatrix = df.corr()
     sns.heatmap(corrMatrix, annot=True, cmap="YlGnBu")
     # plt.show()
 
     dataset = dataset.sample(frac=1)
-    print("dataset shape: ", dataset.shape)
+    # print("dataset shape: ", dataset.shape)
     print("Number of null values in dataset : \n", dataset.isna().sum())
     # print("dataset : ", dataset.shape[0])
     # dataset2 = dataset.drop(["Leak Found"], axis=1)
     dataset2 = dataset
-    print("dataset features : ", dataset.columns)
+    # print("dataset features : ", dataset.columns)
     # leak_found = dataset2["Leak Found"]
     # dataset2 = dataset.drop(['Leak Found'], axis=1)
 
@@ -554,7 +555,7 @@ def semi_super():
     x_train = x_labeled.iloc[test_ind:train_ind]
     y_test = labels.iloc[:test_ind]
     y_train = labels.iloc[test_ind:train_ind]
-    print("X_unlabeld features  ", x_unlabeled.columns)
+    # print("X_unlabeld features  ", x_unlabeled.columns)
     # print("X_unlabeld \n", X_unlabeled)
     data_dict = {
                 "x_unlabeled": x_unlabeled,
